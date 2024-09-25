@@ -1,5 +1,6 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from views import get_all_animals
+from views import get_all_animals, get_single_animal, get_all_locations, get_single_location
+import json
 
 # Here's a class. It inherits from another class.
 # For now, think of a class as a container for functions that
@@ -42,18 +43,25 @@ class HandleRequests(BaseHTTPRequestHandler):
         """
         # Set the response code to 'Ok'
         self._set_headers(200)
-
+        response = {}
         # Your new console.log() that outputs to the terminal
         print(self.path)
+        (resource, id) = self.parse_url(self.path)
 
         # It's an if..else statement
-        if self.path =="/animals":
-            response = get_all_animals()
-        else:
-            response = []
+        if resource =="animals":
+            if id is not None:
+                response = get_single_animal(id)
+            else:
+                response = get_all_animals()
+        if resource =="locations":
+            if id is not None:
+                response = get_single_location(id)
+            else:
+                response = get_all_locations()
 
         # This weird code sends a response back to the client
-        self.wfile.write(f"{response}".encode())
+        self.wfile.write(json.dumps(response).encode())
 
     # Here's a method on the class that overrides the parent's method.
     # It handles any POST request.
@@ -75,7 +83,19 @@ class HandleRequests(BaseHTTPRequestHandler):
         """Handles PUT requests to the server
         """
         self.do_POST()
+    
+    def parse_url(self, path):
+        path_params = path.split("/")
+        resource = path_params[1]
+        id = None
 
+        try:
+            id=int(path_params[2])
+        except IndexError:
+            pass 
+        except ValueError:
+            pass
+        return (resource, id)
 
 # This function is not inside the class. It is the starting
 # point of this application.
